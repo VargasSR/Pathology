@@ -5,7 +5,7 @@ library(dplyr)
 
 #FILENAME <- "USL-2023-46567_1_Scene1_R1.ome.tif - USL-2023-46567_1_Scene1_R1.afi.txt"
 FILENAME <- "USL-2023-46567_1_Scene3_R1.ome.tif - USL-2023-46567_1_Scene3_R1.afi.txt"
-#FILENAME <- "USL-2023-46565_1.ome.tif - USL-2023-46565_1.afi.txt"
+FILENAME <- "USL-2023-46565_1.ome.tif - USL-2023-46565_1.afi.txt"
 
 data <- read.table (FILENAME,  sep = "\t", header = TRUE)
 
