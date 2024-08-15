@@ -3,7 +3,7 @@ library(dplyr)
 
 # Define UI
 ui <- fluidPage(
-  titlePanel("Visiopharm Data Validation Calculator"),
+  titlePanel("Visiopharm Validation Calculator V3"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload .tsv File"),
@@ -52,11 +52,11 @@ server <- function(input, output) {
     
     #remove zero columns
     selected_columns <-
-      selected_columns[, colSums(selected_columns != 0) > 0]
+     selected_columns[, colSums(selected_columns != 0) > 0]
     
     #extract relevant labels
     relevent_columns  <-
-      data %>% select(matches("positives|negatives", ignore.case = TRUE))
+      selected_columns %>% select(matches("positives|negatives", ignore.case = TRUE))
     
     relevent_headers <- names(relevent_columns)
     
@@ -78,6 +78,7 @@ server <- function(input, output) {
     #Extract Total area
     TotalArea <- aggregate_data["AreaAll", 1]
     
+    #initialize results
     results <- data.frame(class = unique_headers,
                           accuracy = NA,
                           precision = NA,
@@ -88,14 +89,29 @@ server <- function(input, output) {
     # Loop through each class 
     for(header in unique_headers) {
       
+  
       # Extract true positives, false positives, false negatives
-      tp <- aggregate_data[paste0(header, ".True.Positives"),]  
-      fp <- aggregate_data[paste0(header, ".False.Positives"),]
+      tp <- aggregate_data[paste0(header, ".True.Positives"),]
+      if(is.null(tp)) {
+        tp <- 0
+      }
+      
+      fp <- aggregate_data[paste0(header, ".False.Positives"),] 
+      if(is.null(fp)) {
+        fp <- 0
+      }
+      
       fn <- aggregate_data[paste0(header, ".False.Negatives"),]
+      if(is.null(fn)) {
+        fn <- 0
+      }
+      
       tn <- TotalArea - tp - fp - fn
       
+      
+      
       # Calculate metrics
-      accuracy <- (tp + fn)/(tp + fp + fn + tn)
+      accuracy <- (tp + tn)/(tp + fp + fn + tn)
       precision <- tp / (tp + fp)
       sensitivity <- tp / (tp + fn)
       specificity <- tn / (tn + fp)
@@ -107,6 +123,7 @@ server <- function(input, output) {
       results$sensitivity[results$class == header] <- sensitivity
       results$specificity[results$class == header] <- specificity
       results$f1[results$class == header] <- f1
+      results[is.na(results)] <- 0.0
     
     }
     
