@@ -3,7 +3,7 @@ library(dplyr)
 
 # Define UI
 ui <- fluidPage(
-  titlePanel("Visiopharm Validation Calculator V3"),
+  titlePanel("Halo Data Validation Calculator"),
   sidebarLayout(
     sidebarPanel(
       fileInput("file", "Upload .tsv File"),
@@ -17,7 +17,8 @@ ui <- fluidPage(
   p("Accuracy (experimental bias) is how close a given set of measurements are to their true value."),
   p("Precision (positive predictive value, spread of data) is how close the measurements are to each other."),
   p("F1 Score is the harmonic mean of Sensitivity and Precision, represents both biases in one metric."),
-  p(" Values range from 0-1, >.70 is good.")
+  p(" Values range from 0-1, >.70 is good."),
+  p( "*In this app the result for unused label classes will be 1*")
 )
 
 
@@ -28,7 +29,7 @@ server <- function(input, output) {
   # Read data from uploaded file
   loaded_data <- reactive({
     req(input$file)
-    read.delim(input$file$datapath, sep = "\t", header = TRUE)
+    read.delim(input$file$datapath, sep = ",")
   })
   
   # Performance metric Calculation
@@ -36,29 +37,26 @@ server <- function(input, output) {
     
     data <- loaded_data()
     
+    
+    
     #select relevant columns
     
     orginal_headers <- names(data)
     
-    ignore_headers <-c("Study.level.1|Study.level.2|Image")
+    #change image.tag to "name"
+    colnames(data)[which(names(data) == "Image.Tag")] <- "Slide"
+    
+    ignore_headers <-c("DenseNet|Image|Name")
     
     channels_to_ignore <- sapply(list(ignore_headers), paste, collapse="|")
     
     #select relevant columns
     selected_columns <-
-      data %>% select(matches("positives|negatives|AreaAll", ignore.case = TRUE))
+      data %>% select(matches("positives|negatives", ignore.case = TRUE))
     selected_columns <-
       selected_columns %>% select(-matches(channels_to_ignore))
     
-    #remove zero columns
-    data_columns <-
-     selected_columns[, colSums(selected_columns != 0) > 0]
-    
-    #extract relevant labels
-    relevent_columns  <-
-      data_columns %>% select(matches("positives|negatives", ignore.case = TRUE))
-    
-    relevent_headers <- names(relevent_columns)
+    relevent_headers <- names(selected_columns)
     
     #extract first word in headers
     first_words <- sapply(strsplit(relevent_headers, "\\."), function(x) x[1])
@@ -75,10 +73,6 @@ server <- function(input, output) {
     # Create new dataframe with headers and sums
     aggregate_data <- data.frame(sums)
     
-    #Extract Total area
-    TotalArea <- aggregate_data["AreaAll", 1]
-    
-    #initialize results
     results <- data.frame(class = unique_headers,
                           accuracy = NA,
                           precision = NA,
@@ -89,33 +83,17 @@ server <- function(input, output) {
     # Loop through each class 
     for(header in unique_headers) {
       
-  
       # Extract true positives, false positives, false negatives
-      tp <- aggregate_data[paste0(header, ".True.Positives"),]
-      if(is.null(tp)) {
-        tp <- 0
-      }
-      
-      fp <- aggregate_data[paste0(header, ".False.Positives"),] 
-      if(is.null(fp)) {
-        fp <- 0
-      }
-      
+      tp <- aggregate_data[paste0(header, ".True.Positives"),]  
+      fp <- aggregate_data[paste0(header, ".False.Positives"),]
       fn <- aggregate_data[paste0(header, ".False.Negatives"),]
-      if(is.null(fn)) {
-        fn <- 0
-      }
-      
-      tn <- TotalArea - tp - fp - fn
-      
-      
       
       # Calculate metrics
-      accuracy <- (tp + tn)/(tp + fp + tn + fn)
+      accuracy <- tp/(tp + fp +fn)
       precision <- tp / (tp + fp)
       sensitivity <- tp / (tp + fn)
-      specificity <- tn / (tn + fp)
-      f1 <- (2 * (precision * sensitivity) / (precision + sensitivity))
+      specificity <- 1 - (fp/(tp + fp))
+      f1 <- (2 *tp ) / ((2 * tp) + fp +fn)
       
       # Store in results
       results$accuracy[results$class == header] <-accuracy
@@ -123,8 +101,7 @@ server <- function(input, output) {
       results$sensitivity[results$class == header] <- sensitivity
       results$specificity[results$class == header] <- specificity
       results$f1[results$class == header] <- f1
-      results[is.na(results)] <- 0.0
-    
+      
     }
     
     return(results)

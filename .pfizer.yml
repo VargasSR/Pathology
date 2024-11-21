@@ -1,0 +1,14 @@
+####
+# All Pfizer repos are required to identify themselves with a .pfizer.yml file.
+# https://confluence.pfizer.com/display/DSOEPipeline/Repository+Identification
+####
+ 
+####
+## You can lookup cmdb_id from https://acie.pfizer.com/App
+## If an application is not listed in ACIE `~` is an acceptable value.
+###
+cmdb_id: ~
+primary_contact: ANDERS55
+# List of email contacts for the project.
+additional_contacts:
+  -
