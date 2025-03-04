@@ -8,14 +8,14 @@ library(readr)
 library(ggdendro)
 
 
-FILE <- "24in0465_enumerated.tsv"
+FILE <- "24IN0467_040506_corrected_ROIs.tsv"
 combinedData <- fread(FILE) 
 
 #separate "name" by " " delimiter to make new columns
 combinedData <- separate(combinedData, Name, c("study", "assay", "tissue", "plex", "section", "slide"), sep = " ")
 
 #new dataframes, negative phenotype, coords, ROI
-nucleiColumnNames <- c("section", grep("(nuclei)", names(combinedData), value=TRUE))
+nucleiColumnNames <- c("section", grep("(Nuclei)", names(combinedData), value=TRUE))
 
 # Subset combinedData to new dataframe with selected columns
 nucleiData  <- na.omit(combinedData[, nucleiColumnNames])
@@ -54,11 +54,6 @@ CD3ColumnNames <- c("section", cd3_not_cd8)
 # Subset combinedData to new dataframe with selected columns
 CD3Data <- na.omit(combinedData[, CD3ColumnNames])
 
-#new dataframes, CD20 phenotype, coords, ROI
-CD20ColumnNames <- c("section", grep("(CD20+)", names(combinedData), value=TRUE))
-
-# Subset combinedData to new dataframe with selected columns
-CD20Data <- na.omit(combinedData[, CD20ColumnNames])
 
 #new dataframes, CD8+CD3+ phenotype, coords, ROI
 
@@ -68,12 +63,13 @@ CD8CD3ColumnNames <- c("section", grep("CD8\\+CD3\\+", names(combinedData), valu
 CD8CD3Data <- na.omit(combinedData[, CD8CD3ColumnNames])
 
 #remove phenotypes from headers
-colnames(CD8Data) <- gsub("CD8\\+ - ", "", colnames(CD8Data))
-colnames(CD8CD3Data) <- gsub("CD8\\+CD3\\+ - ", "", colnames(CD8CD3Data))
-colnames(CD3Data) <- gsub("CD3\\+ - ", "", colnames(CD3Data))
-colnames(CD20Data) <- gsub("CD20\\+ - ", "", colnames(CD20Data))
-colnames(CD163Data) <- gsub("CD163\\+ - ", "", colnames(CD163Data))
-colnames(nucleiData) <- gsub("nuclei - ","", colnames(nucleiData))
+# Remove text before and including " - " from all column names
+setnames(CD8Data, sub(".* - ", "", colnames(CD8Data)))
+setnames(CD8CD3Data, sub(".* - ", "", colnames(CD8CD3Data)))
+setnames(CD3Data,  sub(".* - ", "", colnames(CD3Data)))
+setnames(CD20Data, sub(".* - ", "", colnames(CD20Data)))
+setnames(CD163Data, sub(".* - ", "", colnames(CD163Data)))
+setnames(nucleiData, sub(".* - ", "", colnames(nucleiData)))
 
 #add phenotype column
 CD8Data$phenotype <- 'CD8'
@@ -210,3 +206,4 @@ plot(SSclusters$"Envelope right", SSclusters$"Envelope top",
      pch=16,
      main="Hierarchical Clustering",
      xlab="X", ylab="Y")
+                
