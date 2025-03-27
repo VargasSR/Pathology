@@ -41,9 +41,12 @@ rownames(matrix_df)[rownames(matrix_df) == "Label04"] <- "Dermis Test"
 rownames(matrix_df)[rownames(matrix_df) == "Label05"] <- "Adipose Test"
 rownames(matrix_df)[rownames(matrix_df) == "Label06"] <- "Cartilage Test"
 
-#  rename matrix to use in  published code
+# make dataframe with only active classes
+active_classes_df <- matrix_df[, colSums(active_classes_df != 0) > 0]
+active_classes_df <- active_classes_df[rowSums(active_classes_df != 0) > 0, ]
 
-test01  <-  matrix_values
+test01 <- as.matrix(active_classes_df)
+
 
 # define function
 f1scores <- function(mat, conf.level=0.95){
@@ -122,7 +125,7 @@ total_ROI <- data.frame(t(apply(cm_table, 2, function(x) if(is.numeric(x)) sum(x
 total_labels <- rowSums(cm_table[, sapply(cm_table, is.numeric)])
 total_labels <-data.frame(total_labels)
 
-# Convert total_ROI dataframe to a vector if necessary
+# Convert total_ROI dataframe to a vector 
 total_ROI_vector <- as.vector(total_ROI)
 
 # Create a new dataframe to store the results
@@ -131,8 +134,8 @@ cm_prop <- cm_table
 # Loop through each element and perform the division with a check for zero
 for (i in 1:nrow(cm_table)) {
   for (j in 1:ncol(cm_table)) {
-    if (total_ROI_vector[j] != 0) {
-      cm_prop[i, j] <- cm_table[i, j] / total_ROI_vector[j]
+    if (total_ROI[j] != 0) {
+      cm_prop[i, j] <- cm_table[i, j] / total_ROI[j]
     } else {
       cm_prop[i, j] <- NA  
     }
@@ -187,39 +190,6 @@ avg_f1 <- 2 * avg_precision * avg_recall / (avg_precision + avg_recall)
 
 avg_results <- data.frame(Measure = c("Precision", "Recall", "F1"),
                           Value = c(avg_precision, avg_recall, avg_f1))
-
-# Print tables  
-print("Class-level metrics:")
-print(class_results)
-
-print("Average metrics:")
-print(avg_results)
-
-# Format results into table
-results_table <- results
-results_table$Measure <- rownames(results_table)
-results_table <- reshape2::melt(results_table, id.vars="Measure")
-
-# Print results table  
-print("Results table:")
-print(results_table)
-
-
-# Calculate total annotations  
-total_annotations <- sum(colSums(cm))
-
-# Get proportion for each class
-class_props <- colSums(cm) / total_annotations
-
-# Calculate class-level metrics
-class_precision <- diag(cm) / rowSums(cm)
-class_recall <- diag(cm) / colSums(cm)
-class_f1 <- 2 * class_precision * class_recall / (class_precision + class_recall)
-
-# Calculate weighted averages
-weighted_avg_precision <- sum(class_props * class_precision) 
-weighted_avg_recall <- sum(class_props * class_recall)
-weighted_avg_f1 <- sum(class_props * class_f1)
 
 
 
