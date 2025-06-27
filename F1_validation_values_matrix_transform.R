@@ -1,4 +1,4 @@
-setwd("~/Data Landing Zone/Averaged F1 Validation")
+setwd("~/Pathology/F1_validation/test_data/Averaged_F1_Data/3")
 getwd()
 library(data.table)
 library(tidyr)
@@ -6,7 +6,11 @@ library(ggplot2)
 library(dplyr)
 library(reshape2)
 
-FILE <- "test03_real_data.tsv"
+ 
+#FILE <- "test03_real_data.tsv"
+ 
+FILE <- "23IN0039 004 Ear A F 24Feb23 HE NA 4.tsv"
+ 
 validation_raw_data <- fread(FILE) 
 
 # Define column names
@@ -32,11 +36,31 @@ matrix_df <- as.data.frame(matrix_values)
 
 # change names of ROIS and Labels 
 
+ 
 colnames(matrix_df)[colnames(matrix_df) == "ROI01"] <- "Epidermis"
 colnames(matrix_df)[colnames(matrix_df) == "ROI03"] <- "Muscle"
 colnames(matrix_df)[colnames(matrix_df) == "ROI04"] <- "Dermis"
 colnames(matrix_df)[colnames(matrix_df) == "ROI05"] <- "Adipose"
 colnames(matrix_df)[colnames(matrix_df) == "ROI06"] <- "Cartilage"
+ 
+colnames(matrix_df)[colnames(matrix_df) == "ROI1"] <- "Epidermis GT"
+colnames(matrix_df)[colnames(matrix_df) == "ROI4"] <- "Muscle GT"
+colnames(matrix_df)[colnames(matrix_df) == "ROI5"] <- "Dermis GT"
+colnames(matrix_df)[colnames(matrix_df) == "ROI6"] <- "Adipose GT"
+colnames(matrix_df)[colnames(matrix_df) == "ROI7"] <- "Cartilage GT"
+
+rownames(matrix_df)[rownames(matrix_df) == "Label01"] <- "Epidermis Test"
+rownames(matrix_df)[rownames(matrix_df) == "Label03"] <- "Muscle Test"
+rownames(matrix_df)[rownames(matrix_df) == "Label04"] <- "Dermis Test"
+rownames(matrix_df)[rownames(matrix_df) == "Label05"] <- "Adipose Test"
+rownames(matrix_df)[rownames(matrix_df) == "Label06"] <- "Cartilage Test"
+
+# make dataframe with only active classes
+active_classes_df <- matrix_df[, colSums(active_classes_df != 0) > 0]
+active_classes_df <- active_classes_df[rowSums(active_classes_df != 0) > 0, ]
+
+test01 <- as.matrix(active_classes_df)
+ 
 
 rownames(matrix_df)[rownames(matrix_df) == "Label01"] <- "Epidermis"
 rownames(matrix_df)[rownames(matrix_df) == "Label03"] <- "Muscle"
@@ -44,10 +68,13 @@ rownames(matrix_df)[rownames(matrix_df) == "Label04"] <- "Dermis"
 rownames(matrix_df)[rownames(matrix_df) == "Label05"] <- "Adipose"
 rownames(matrix_df)[rownames(matrix_df) == "Label06"] <- "Cartilage"
 
+ 
 #  rename matrix to use in  published code
 
 test01  <-  matrix_values
 
+ 
+ 
 # define function
 f1scores <- function(mat, conf.level=0.95){
   
@@ -125,7 +152,11 @@ total_ROI <- data.frame(t(apply(cm_table, 2, function(x) if(is.numeric(x)) sum(x
 total_labels <- rowSums(cm_table[, sapply(cm_table, is.numeric)])
 total_labels <-data.frame(total_labels)
 
+ 
 # Convert total_ROI dataframe to a vector if necessary
+ 
+# Convert total_ROI dataframe to a vector 
+ 
 total_ROI_vector <- as.vector(total_ROI)
 
 # Create a new dataframe to store the results
@@ -134,8 +165,13 @@ cm_prop <- cm_table
 # Loop through each element and perform the division with a check for zero
 for (i in 1:nrow(cm_table)) {
   for (j in 1:ncol(cm_table)) {
+ 
     if (total_ROI_vector[j] != 0) {
       cm_prop[i, j] <- cm_table[i, j] / total_ROI_vector[j]
+ 
+    if (total_ROI[j] != 0) {
+      cm_prop[i, j] <- cm_table[i, j] / total_ROI[j]
+ 
     } else {
       cm_prop[i, j] <- NA  
     }
@@ -191,6 +227,7 @@ avg_f1 <- 2 * avg_precision * avg_recall / (avg_precision + avg_recall)
 avg_results <- data.frame(Measure = c("Precision", "Recall", "F1"),
                           Value = c(avg_precision, avg_recall, avg_f1))
 
+ 
 # Print tables  
 print("Class-level metrics:")
 print(class_results)
@@ -224,6 +261,8 @@ weighted_avg_precision <- sum(class_props * class_precision)
 weighted_avg_recall <- sum(class_props * class_recall)
 weighted_avg_f1 <- sum(class_props * class_f1)
 
+ 
+ 
 
 
 

@@ -195,7 +195,7 @@ server <- function(input, output) {
     
     colnames(columns) <- group_names
     
-    as.data.frame(columns)
+   as.data.frame(colnames)
     
   })
   
