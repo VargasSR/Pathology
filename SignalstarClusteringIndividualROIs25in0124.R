@@ -1,4 +1,4 @@
-setwd("~/Data Landing Zone/SignalStar")
+setwd("~/Data Landing Zone/SignalStar/25IN0124_clusters")
 getwd()
 library(data.table)
 library(dplyr)
@@ -8,11 +8,14 @@ library(readr)
 library(ggdendro)
 
 
-FILE <- "24IN0467_040506_corrected_ROIs.tsv"
+#FILE <- "25IN0124_kidneys245.tsv"
+FILE <- "25IN0124_livers2456.tsv"
+#FILE <- "25IN0124_salivary24.tsv"
+
 combinedData <- fread(FILE) 
 
 #separate "name" by " " delimiter to make new columns
-combinedData <- separate(combinedData, Name, c("study", "assay", "tissue", "plex", "section", "slide"), sep = " ")
+combinedData <- separate(combinedData, Name, c("study", "ID", "tissue", "RS", "Na", "originalstudy", "plex", "date", "slide"), sep = " ")
 
 #new dataframes, negative phenotype, coords, ROI
 nucleiColumnNames <- c("section", grep("(Nuclei)", names(combinedData), value=TRUE))
@@ -162,7 +165,7 @@ dist_matrix <- dist(ratioTable, method = "euclidean")
 hc <- hclust(dist_matrix, method = "average")
 
 # Cut the dendrogram into a desired number of clusters (e.g., 3)
-clusters <- cutree(hc, k = 7)
+clusters <- cutree(hc, k = 3)
 
 
 # Plot the dendrogram
